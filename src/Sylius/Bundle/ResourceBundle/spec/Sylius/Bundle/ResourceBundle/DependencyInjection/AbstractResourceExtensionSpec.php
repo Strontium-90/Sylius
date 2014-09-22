@@ -85,6 +85,74 @@ class AbstractResourceExtensionSpec extends ObjectBehavior
         );
     }
 
+    function it_should_create_single_form_definition(ContainerBuilder $container)
+    {
+        $this->mockDefaultBehavior($container);
+
+        $container
+            ->setDefinition(
+                'sylius.form.type.resource',
+                Argument::type('Symfony\Component\DependencyInjection\Definition')
+            )
+            ->shouldBeCalled()
+        ;
+
+
+        $this->configure(
+            array(
+                'classes' => array(
+                    'resource' => array(
+                        'model' => 'Sylius\Model',
+                        'form'  => 'Sylius\FormType',
+                    ),
+                ),
+            ),
+            new Configuration(),
+            $container,
+            AbstractResourceExtension::CONFIGURE_FORMS
+        )
+        ;
+    }
+
+    function it_should_create_multiple_form_definition(ContainerBuilder $container)
+    {
+        $this->mockDefaultBehavior($container);
+
+        $container->setDefinition(
+            'sylius.form.type.resource',
+            Argument::type('Symfony\Component\DependencyInjection\Definition')
+        )
+                  ->shouldBeCalled()
+        ;
+
+        $container->setDefinition(
+            'sylius.form.type.resource_other',
+            Argument::type('Symfony\Component\DependencyInjection\Definition')
+        )
+                  ->shouldBeCalled()
+        ;
+
+
+        $this->configure(
+            array(
+                'classes' => array(
+                    'resource' => array(
+                        'model' => 'Sylius\Model',
+                        'form'  => array(
+                            'default' => 'Sylius\FormType',
+                            'other'   => 'Sylius\OtherFormType',
+                        ),
+                    ),
+                ),
+            ),
+            new Configuration(),
+            $container,
+            AbstractResourceExtension::CONFIGURE_FORMS
+        )
+        ;
+    }
+
+
     protected function mockDefaultBehavior($container)
     {
         $container->hasParameter('sylius.config.classes')->willReturn(false);

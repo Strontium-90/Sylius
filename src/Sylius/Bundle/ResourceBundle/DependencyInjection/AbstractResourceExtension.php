@@ -19,6 +19,7 @@ use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
+use Symfony\Component\DependencyInjection\Parameter;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 
 /**
@@ -39,6 +40,8 @@ abstract class AbstractResourceExtension extends Extension
     protected $configFiles = array(
         'services',
     );
+
+    const DEFAULT_KEY = 'default';
 
     /**
      * {@inheritdoc}
@@ -108,16 +111,23 @@ abstract class AbstractResourceExtension extends Extension
     {
         foreach ($classes as $model => $serviceClasses) {
             foreach ($serviceClasses as $service => $class) {
-                $container->setParameter(
-                    sprintf(
-                        '%s.%s.%s%s.class',
-                        $this->applicationName,
-                        in_array($service, array('form', 'choice_form')) ? 'form.type' : $service,
-                        $model,
-                        $service === 'choice_form' ? '_choice' : ''
-                    ),
-                    $class
-                );
+                if (!is_array($class)) {
+                    $class = array(self::DEFAULT_KEY => $class);
+                }
+                foreach ($class as $suffix => $subClass) {
+                    $container->setParameter(
+                        sprintf(
+                            '%s.%s.%s%s.class',
+                            $this->applicationName,
+                            in_array($service, array('form', 'choice_form')) ? 'form.type' : $service,
+                            $model,
+                            $suffix === self::DEFAULT_KEY 
+                                ? ($service === 'choice_form' ? '_choice' : '')
+                                : sprintf('_%s', $suffix)
+                        ),
+                        $subClass
+                    );
+                }
             }
         }
     }
@@ -131,7 +141,20 @@ abstract class AbstractResourceExtension extends Extension
     protected function registerFormTypes(array $config, ContainerBuilder $container)
     {
         foreach ($config['classes'] as $model => $serviceClasses) {
-            // registering resource form types... coming soon
+            // registering resource form types
+            if (isset($serviceClasses['form'])) {
+                if (!is_array($serviceClasses['form'])) {
+                    $this->createResourceFormDefinition($container, $model, $serviceClasses['form']);
+                } else {
+                    foreach ($serviceClasses['form'] as $name => $class) {
+                        $this->createResourceFormDefinition(
+                            $container,
+                            $model.($name === self::DEFAULT_KEY ? '' : sprintf('_%s', $name)),
+                            $class
+                        );
+                    }
+                }
+            }
 
             // registering resource choice form types
             if (!empty($serviceClasses['choice_form'])) {
@@ -139,8 +162,8 @@ abstract class AbstractResourceExtension extends Extension
                 $definition = new Definition($serviceClasses['choice_form']);
                 $definition
                     ->setArguments(array(
-                        $serviceClasses['model'],
-                        $config['driver'],
+                        new Parameter(sprintf('%s.model.%s.class', $this->applicationName, $model)),
+                        new Parameter(sprintf('%s.driver', $this->getAlias())),
                         $name
                     ))
                     ->addTag('form.type', array('alias' => $name))
@@ -154,6 +177,27 @@ abstract class AbstractResourceExtension extends Extension
 
             // registering resource filter form types... coming soon
         }
+    }
+
+    /**
+     * @param ContainerBuilder $container
+     * @param string           $name  Form name
+     * @param string           $class Form type class
+     */
+    protected function createResourceFormDefinition(ContainerBuilder $container, $name, $class)
+    {
+        $definition = new Definition($class);
+        $definition
+            ->setArguments(array(
+                new Parameter(sprintf('%s.model.%s.class', $this->applicationName, $name)),
+                new Parameter(sprintf('%s.validation_group.%s', $this->applicationName, $name))
+            ))
+            ->addTag('form.type',
+                array(
+                    'alias' => sprintf('%s_%s', $this->applicationName, $name)
+                ))
+        ;
+        $container->setDefinition(sprintf('%s.form.type.%s', $this->applicationName, $name), $definition);
     }
 
     /**

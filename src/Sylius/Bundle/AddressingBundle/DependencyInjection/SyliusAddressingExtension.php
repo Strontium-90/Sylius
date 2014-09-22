@@ -33,7 +33,6 @@ class SyliusAddressingExtension extends AbstractResourceExtension
             new Configuration(),
             $container,
             self::CONFIGURE_LOADER | self::CONFIGURE_DATABASE | self::CONFIGURE_PARAMETERS | self::CONFIGURE_VALIDATORS
-            | self::CONFIGURE_FORMS
         );
 
         $container->setParameter('sylius.scope.zone', $config['scopes']);
@@ -43,6 +42,16 @@ class SyliusAddressingExtension extends AbstractResourceExtension
             ->setArguments(array(
                 new Reference('sylius.repository.province')
             ))
+        ;
+
+        $container
+            ->getDefinition('sylius.form.type.address')
+            ->addArgument(new Reference('sylius.form.listener.address'))
+        ;
+
+        $container
+            ->getDefinition('sylius.form.type.zone')
+            ->addArgument(new Parameter('sylius.scope.zone'))
         ;
     }
 }
