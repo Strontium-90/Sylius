@@ -226,6 +226,7 @@ abstract class AbstractResourceExtension extends Extension
     {
         $bundle = str_replace(array('Extension', 'DependencyInjection\\'), array('Bundle', ''), get_class($this));
         $driver = $config['driver'];
+        $manager = isset($config['object_manager']) ? $config['object_manager'] : 'default';
 
         if (!in_array($driver, call_user_func(array($bundle, 'getSupportedDrivers')))) {
             throw new InvalidDriverException($driver, basename($bundle));
@@ -233,8 +234,9 @@ abstract class AbstractResourceExtension extends Extension
 
         $this->loadConfigurationFile(array(sprintf('driver/%s', $driver)), $loader);
 
-        $container->setParameter($this->getAlias().'.driver', $driver);
-        $container->setParameter($this->getAlias().'.driver.'.$driver, true);
+        $container->setParameter(sprintf('%s.driver', $this->getAlias()), $driver);
+        $container->setParameter(sprintf('%s.driver.%', $this->getAlias(), $driver), true);
+        $container->setParameter(sprintf('%s.object_manager', $this->getAlias()), $manager);
 
         foreach ($config['classes'] as $model => $classes) {
             if (array_key_exists('model', $classes)) {
