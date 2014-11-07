@@ -110,10 +110,13 @@ abstract class AbstractResourceConfiguration implements ConfigurationInterface
                         ->defaultValue(isset($defaults['interface']) ? $defaults['interface'] : null)
                     ->end()
                     ->append($this->createFormsNode(isset($defaults['form']) ? $defaults['form'] : null))
-                    ->append($this->createFormsNode(
-                        isset($defaults['choice_form']) ? $defaults['choice_form'] : null,
-                        'choice_form'
-                    ))
+                    ->scalarNode('choice_form')
+                        ->defaultValue(
+                            isset($defaults['choice_form'])
+                                ? $defaults['choice_form']
+                                : '%sylius.form.type.resource_choice.class%'
+                        )
+                    ->end()
                 ->end()
            // ->end()
         ;
