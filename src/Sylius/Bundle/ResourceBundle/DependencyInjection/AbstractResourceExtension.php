@@ -235,7 +235,7 @@ abstract class AbstractResourceExtension extends Extension
         $this->loadConfigurationFile(array(sprintf('driver/%s', $driver)), $loader);
 
         $container->setParameter(sprintf('%s.driver', $this->getAlias()), $driver);
-        $container->setParameter(sprintf('%s.driver.%', $this->getAlias(), $driver), true);
+        $container->setParameter(sprintf('%s.driver.%s', $this->getAlias(), $driver), true);
         $container->setParameter(sprintf('%s.object_manager', $this->getAlias()), $manager);
 
         foreach ($config['classes'] as $model => $classes) {
