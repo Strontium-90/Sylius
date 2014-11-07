@@ -13,6 +13,7 @@ namespace Sylius\Bundle\AddressingBundle\DependencyInjection;
 
 use Sylius\Bundle\ResourceBundle\DependencyInjection\AbstractResourceExtension;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Reference;
 
 /**
  * Addressing extension.
@@ -35,5 +36,22 @@ class SyliusAddressingExtension extends AbstractResourceExtension
         );
 
         $container->setParameter('sylius.scope.zone', $config['scopes']);
+
+        $container
+            ->getDefinition('sylius.form.type.province_choice')
+            ->setArguments(array(
+                new Reference('sylius.repository.province')
+            ))
+        ;
+
+        $container
+            ->getDefinition('sylius.form.type.address')
+            ->addArgument(new Reference('sylius.form.listener.address'))
+        ;
+
+        $container
+            ->getDefinition('sylius.form.type.zone')
+            ->addArgument(new Parameter('sylius.scope.zone'))
+        ;
     }
 }
