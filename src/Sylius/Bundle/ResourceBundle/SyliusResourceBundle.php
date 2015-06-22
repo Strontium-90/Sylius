@@ -33,5 +33,6 @@ class SyliusResourceBundle extends Bundle
     public function build(ContainerBuilder $container)
     {
         $container->addCompilerPass(new ObjectToIdentifierServicePass());
+        //$container->addCompilerPass(new DoctrineMetadataPass());
     }
 }
